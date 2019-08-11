@@ -3,6 +3,9 @@
  *
  * Created on: September 12, 2018
  * Author: Aniruddha Kanhere
+ * Reads a trace file and simulates a L1 and L2 cache with a victim cache
+ * Uses the LRU (Least recently used policy) for evicting any block from 
+ * any level of cache
 */
 
 #include<stdio.h>
@@ -377,6 +380,8 @@ void cache_l1_sim(unsigned long int address, char read_write)
 
 		LRUi = addr1;
 
+		//Update the LRU values of all other cache blocks. The bigger the values, the older the block
+		//Most recently used block will have the value of 1.
 		for(unsigned long int i=0; i < params.l1_assoc; i++)
 		{
 			if(i!=LRUi && cache_mem_l1[index_req][i].recently_used<prv_LRUval)
@@ -408,8 +413,8 @@ void cache_l1_sim(unsigned long int address, char read_write)
 			}
 		}
 
-		//if we find the invalid blocks from the above loop then we don't need to go to the VC since we haven't discarded any block yet
-		//but we still have to go the the L2 cache to fetch the given address
+		//if we find the invalid blocks from the above loop then we don't need to go to the VC since we haven't 
+		//discarded any block yet but we still have to go the the L2 cache to fetch the given address
 		if(found_invalid)
 		{
 			if(params.l2_size)                               //if L2 is enabled but VC is not
@@ -417,7 +422,7 @@ void cache_l1_sim(unsigned long int address, char read_write)
 				cache_l2_sim(address, 'r');
 			}
 
-			cache_mem_l1[index_req][addr1].tag = tag_req;							//this we get from the L2
+			cache_mem_l1[index_req][addr1].tag = tag_req;			//this we get from the L2
 			cache_mem_l1[index_req][addr1].valid_bits = 1;
 
 			if(read_write=='w')
@@ -449,10 +454,10 @@ void cache_l1_sim(unsigned long int address, char read_write)
 				}
 			}
 		}
-		//If we did not find any the requested block and neither did we find any invalid block, we must try and search the VC first and swap
-		//the required block with the LRU block which we will evict. If found, then that's it. But if not found, we need to evict the LRU
-		//block (which will be taken by the VC, and if dirty we have to write it through to L2 cache too) and then we will ask the requested
-		//block from the L2 cache.
+		//If we did not find any the requested block and neither did we find any invalid block, we must try and search the VC first 
+		//and swap the required block with the LRU block which we will evict. If found, then that's it. But if not found, we need to
+		//evict the LRU block (which will be taken by the VC, and if dirty we have to write it through to L2 cache too) and then we 
+		//will ask the requested block from the L2 cache.
 		else							//we have to find the least recently used
 		{
 			LRUi=0;
